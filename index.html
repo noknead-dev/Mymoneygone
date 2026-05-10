@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chi tiêu – Minimal</title>
+
+<style>
+:root{
+  --bg:#f7f7f8;
+  --card:#ffffff;
+  --text:#111111;
+  --muted:#6b7280;
+  --border:#e5e7eb;
+  --primary:#2563eb;
+  --danger:#dc2626;
+}
+
+body.dark{
+  --bg:#0b0f19;
+  --card:#111827;
+  --text:#e5e7eb;
+  --muted:#9ca3af;
+  --border:#1f2937;
+  --primary:#3b82f6;
+  --danger:#f87171;
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:-apple-system, system-ui;
+}
+
+.container{
+  max-width:420px;
+  margin:auto;
+  padding:16px;
+}
+
+.card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:16px;
+  margin-bottom:16px;
+}
+
+/* TABS */
+.tabs{
+  display:flex;
+  align-items:center;
+  margin-bottom:12px;
+}
+.tab{
+  flex:1;
+  text-align:center;
+  padding:8px;
+  font-size:14px;
+  color:var(--muted);
+  cursor:pointer;
+}
+.tab.active{
+  color:var(--primary);
+  border-bottom:2px solid var(--primary);
+}
+.tab.dark-btn{
+  flex:0;
+  width:36px;
+}
+
+/* FORM */
+input,select,button{
+  width:100%;
+  padding:12px;
+  margin-top:10px;
+  font-size:15px;
+  border-radius:10px;
+  border:1px solid var(--border);
+  background:transparent;
+  color:var(--text);
+}
+button{
+  background:var(--primary);
+  color:#fff;
+  border:none;
+  font-weight:500;
+  cursor:pointer;
+}
+
+/* LIST */
+.day{
+  margin-top:14px;
+  font-size:13px;
+  color:var(--muted);
+}
+
+.item{
+  display:flex;
+  align-items:center;
+  padding:8px 0;
+  border-bottom:1px solid var(--border);
+}
+
+.item-left{
+  flex:1;
+  padding-right:8px;
+}
+
+.item-right{
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+
+.item-right b{
+  font-weight:500;
+  white-space:nowrap;
+}
+
+/* ICON BUTTON – iOS STYLE */
+.icon-btn{
+  width:22px;
+  height:22px;
+  border-radius:6px;
+  background:transparent;
+  border:1px solid var(--border);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.icon-btn svg{
+  width:14px;
+  height:14px;
+  fill:none;
+  stroke-width:1.8;      /* iOS mảnh */
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+.icon-btn.edit svg{ stroke:var(--primary); }
+.icon-btn.del svg{ stroke:var(--danger); }
+
+.icon-btn:hover{
+  background:rgba(0,0,0,.05);
+}
+body.dark .icon-btn:hover{
+  background:rgba(255,255,255,.08);
+}
+
+/* UNDO */
+.undo{
+  position:fixed;
+  bottom:18px;
+  left:50%;
+  transform:translateX(-50%);
+  background:#111;
+  color:#fff;
+  padding:8px 14px;
+  border-radius:999px;
+  display:none;
+  font-size:14px;
+}
+.undo button{
+  margin-left:8px;
+  padding:4px 10px;
+  font-size:13px;
+}
+
+/* STAT */
+.stat-row{
+  display:flex;
+  justify-content:space-between;
+  margin:6px 0;
+}
+.up{color:#16a34a}
+.down{color:var(--danger)}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<!-- TABS -->
+<div class="tabs">
+  <div class="tab active" data-tab="list">Danh sách</div>
+  <div class="tab" data-tab="stat">Thống kê</div>
+  <div class="tab dark-btn" onclick="toggleDark()">🌙</div>
+</div>
+
+<!-- FORM -->
+<div class="card">
+  <input id="money" type="number" placeholder="Số tiền">
+  <input id="date" type="date" min="2026-01-01">
+  <input id="note" placeholder="Ghi chú">
+
+  <select id="cat">
+    <option>🍜 Ăn uống</option>
+    <option>🚗 Đi lại</option>
+    <option>🏠 Nhà ở</option>
+    <option>🛍️ Mua sắm</option>
+    <option>👶 Con cái</option>
+  </select>
+
+  <select id="childCat" style="display:none">
+    <option>Học phí</option>
+    <option>Ăn uống</option>
+    <option>Sinh hoạt</option>
+    <option>Y tế</option>
+    <option>Mục khác</option>
+  </select>
+
+  <!-- FIX NÚT THÊM -->
+  <button type="button" id="addBtn">Thêm</button>
+</div>
+
+<!-- LIST -->
+<div id="listView" class="card"></div>
+
+<!-- STAT -->
+<div id="statView" class="card" style="display:none">
+  <select id="monthA"></select>
+  <select id="monthB"></select>
+  <div id="compareResult"></div>
+</div>
+
+</div>
+
+<!-- UNDO -->
+<div class="undo" id="undoBar">
+  Đã xoá
+  <button onclick="undo()">Hoàn tác</button>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+let data=JSON.parse(localStorage.getItem("expenses")||"[]");
+let editIndex=null,deletedItem=null,deletedIndex=null,undoTimer=null;
+
+const money=$("money"), date=$("date"), note=$("note"),
+      cat=$("cat"), childCat=$("childCat"),
+      listView=$("listView"), statView=$("statView"),
+      undoBar=$("undoBar");
+
+const MIN_DATE="2026-01-01";
+date.value=new Date().toISOString().slice(0,10)>=MIN_DATE
+  ? new Date().toISOString().slice(0,10)
+  : MIN_DATE;
+
+/* Dark mode */
+function toggleDark(){
+  document.body.classList.toggle("dark");
+  localStorage.setItem("dark",document.body.classList.contains("dark"));
+}
+if(localStorage.getItem("dark")==="true")
+  document.body.classList.add("dark");
+
+/* Tabs */
+document.querySelector(".tabs").onclick=e=>{
+  if(!e.target.dataset.tab) return;
+  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+  e.target.classList.add("active");
+  listView.style.display=e.target.dataset.tab==="list"?"block":"none";
+  statView.style.display=e.target.dataset.tab==="stat"?"block":"none";
+};
+
+cat.onchange=()=>childCat.style.display=cat.value==="👶 Con cái"?"block":"none";
+
+/* ADD */
+$("addBtn").addEventListener("click",add);
+
+function add(){
+  if(!money.value) return;
+
+  const finalCat = cat.value==="👶 Con cái"
+    ? `👶 Con cái · ${childCat.value}`
+    : cat.value;
+
+  const item={money:+money.value,date:date.value,note:note.value,cat:finalCat};
+
+  editIndex!==null?data[editIndex]=item:data.unshift(item);
+  editIndex=null;
+
+  money.value=""; note.value="";
+  render();
+}
+
+/* EDIT / DELETE */
+function edit(i){
+  const e=data[i];
+  money.value=e.money;
+  date.value=e.date;
+  note.value=e.note;
+
+  if(e.cat.startsWith("👶")){
+    cat.value="👶 Con cái";
+    childCat.style.display="block";
+    childCat.value=e.cat.split(" · ")[1];
+  }else{
+    cat.value=e.cat;
+    childCat.style.display="none";
+  }
+  editIndex=i;
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function del(i){
+  deletedItem=data[i];
+  deletedIndex=i;
+  data.splice(i,1);
+  render();
+
+  undoBar.style.display="block";
+  clearTimeout(undoTimer);
+  undoTimer=setTimeout(()=>undoBar.style.display="none",5000);
+}
+
+function undo(){
+  if(deletedItem){
+    data.splice(deletedIndex,0,deletedItem);
+    render();
+  }
+  deletedItem=null;
+  undoBar.style.display="none";
+}
+
+/* RENDER */
+function render(){
+  localStorage.setItem("expenses",JSON.stringify(data));
+  renderList(); renderStat();
+}
+
+function renderList(){
+  let html="";
+  const g={};
+  data.forEach(e=>(g[e.date]??=[]).push(e));
+
+  Object.keys(g).sort((a,b)=>b.localeCompare(a)).forEach(d=>{
+    html+=`<div class="day">${d}</div>`;
+    g[d].forEach(e=>{
+      html+=`
+      <div class="item">
+        <div class="item-left">${e.cat} – ${e.note||""}</div>
+        <div class="item-right">
+          <b>${e.money.toLocaleString()} đ</b>
+
+          <button class="icon-btn edit" onclick="edit(${data.indexOf(e)})">
+            <svg viewBox="0 0 24 24">
+              <path d="M4 20l4-1 10-10-3-3L5 16l-1 4z"/>
+              <path d="M14 6l3 3"/>
+            </svg>
+          </button>
+
+          <button class="icon-btn del" onclick="del(${data.indexOf(e)})">
+            <svg viewBox="0 0 24 24">
+              <path d="M5 7h14"/>
+              <path d="M9 7V5h6v2"/>
+              <path d="M7 7l1 12h8l1-12"/>
+            </svg>
+          </button>
+        </div>
+      </div>`;
+    });
+  });
+
+  listView.innerHTML=html || `<div style="color:var(--muted)">Chưa có dữ liệu</div>`;
+}
+
+/* COMPARE MONTH */
+function renderStat(){
+  const months=[...new Set(data.map(e=>e.date.slice(0,7)))].sort();
+  $("monthA").innerHTML=months.map(m=>`<option>${m}</option>`).join("");
+  $("monthB").innerHTML=months.map(m=>`<option>${m}</option>`).join("");
+  $("monthA").onchange=$("monthB").onchange=compare;
+  compare();
+}
+
+function compare(){
+  const mA=$("monthA").value, mB=$("monthB").value;
+  if(!mA||!mB) return;
+
+  const sum=m=>data.filter(e=>e.date.startsWith(m))
+    .reduce((a,b)=>a+b.money,0);
+
+  const A=sum(mA), B=sum(mB);
+  const p=B?(((A-B)/B)*100).toFixed(1):null;
+
+  $("compareResult").innerHTML=`
+    <div class="stat-row"><b>${mA}</b><b>${A.toLocaleString()} đ</b></div>
+    <div class="stat-row"><b>${mB}</b><b>${B.toLocaleString()} đ</b></div>
+    <div class="stat-row"><b>Thay đổi</b>
+      <b class="${p>=0?'up':'down'}">${p===null?'Mới':(p>0?'+':'')+p+'%'}</b>
+    </div>`;
+}
+
+render();
+</script>
+</body>
+</html>
