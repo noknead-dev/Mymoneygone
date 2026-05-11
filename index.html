@@ -25,8 +25,10 @@
   --green-dim: rgba(74,222,128,0.12);
   --red: #f87171;
   --red-dim: rgba(248,113,113,0.12);
-  --accent: #3C7363;
+// Giải màu gradient background center
+  --accent: #e8ff47;
   --accent-dim: rgba(232,255,71,0.1);
+  --accent-gradient: linear-gradient(135deg, #FFD552 0%, #D88595 45%, #56BCE3 100%);
   --r: 16px;
   --r-sm: 10px;
   --font: 'Be Vietnam Pro', sans-serif;
@@ -57,7 +59,7 @@ nav button span{font-size:10px;font-weight:500}
 .icon-btn svg{width:18px;height:18px;stroke-width:1.8}
 
 /* BALANCE CARD */
-.balance-card{margin:20px 20px 0;background:var(--accent);border-radius:20px;padding:24px;position:relative;overflow:hidden}
+.balance-card{margin:20px 20px 0;background:var(--accent-gradient);border-radius:20px;padding:24px;position:relative;overflow:hidden}
 .balance-card::before{content:'';position:absolute;top:-30px;right:-30px;width:120px;height:120px;border-radius:50%;background:rgba(0,0,0,0.08)}
 .balance-label{font-size:12px;font-weight:600;color:rgba(0,0,0,0.5);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
 .balance-amount{font-family:var(--mono);font-size:32px;font-weight:700;color:#0a0a0a;line-height:1;margin-bottom:20px;word-break:break-all}
@@ -87,27 +89,6 @@ nav button span{font-size:10px;font-weight:500}
 .tx-time{font-size:11px;color:var(--text3);margin-top:2px}
 .tx-del{background:none;border:none;cursor:pointer;color:var(--text3);padding:4px;margin-left:4px}
 .tx-del svg{width:15px;height:15px;stroke-width:1.8}
-
-/* TX SCROLL CONTAINER */
-.tx-scroll-wrap{
-  flex:1;
-  overflow-y:auto;
-  overflow-x:hidden;
-  -webkit-overflow-scrolling:touch;
-  min-height:0;
-  padding-bottom:4px;
-}
-.tx-scroll-wrap::-webkit-scrollbar{width:3px}
-.tx-scroll-wrap::-webkit-scrollbar-track{background:transparent}
-.tx-scroll-wrap::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
-
-/* HOME SCREEN fixed layout */
-#screen-home{
-  overflow:hidden !important;
-  display:none;
-  flex-direction:column;
-}
-#screen-home.active{display:flex}
 
 .empty-state{padding:40px 20px;text-align:center;color:var(--text3)}
 .empty-state svg{width:48px;height:48px;margin-bottom:12px;opacity:.4}
@@ -199,7 +180,16 @@ nav button span{font-size:10px;font-weight:500}
 .filter-tab{padding:6px 14px;border-radius:20px;border:1px solid var(--border);background:var(--bg2);color:var(--text2);font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap;font-family:var(--font);transition:.2s}
 .filter-tab.active{background:var(--accent-dim);border-color:var(--accent);color:var(--accent)}
 
-/* IMPORT FILE LABEL */
+/* TX SCROLLABLE CONTAINER */
+.tx-scroll-wrap{overflow-y:auto;max-height:calc(100vh - 420px);-webkit-overflow-scrolling:touch;padding-bottom:4px}
+.tx-scroll-wrap::-webkit-scrollbar{width:3px}
+.tx-scroll-wrap::-webkit-scrollbar-track{background:transparent}
+.tx-scroll-wrap::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+#history-list{overflow-y:auto;flex:1;min-height:0;-webkit-overflow-scrolling:touch}
+#history-list::-webkit-scrollbar{width:3px}
+#history-list::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+
 .import-label{display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-sm);margin-bottom:8px;cursor:pointer}
 .import-label input{display:none}
 </style>
@@ -209,7 +199,7 @@ nav button span{font-size:10px;font-weight:500}
 
 <!-- HOME SCREEN -->
 <div class="screen active" id="screen-home">
-  <div class="topbar" style="flex-shrink:0">
+  <div class="topbar">
     <div class="topbar-row">
       <div>
         <div style="font-size:12px;color:var(--text3);font-weight:500">Xin chào 👋</div>
@@ -223,7 +213,7 @@ nav button span{font-size:10px;font-weight:500}
     </div>
   </div>
 
-  <div class="month-selector" style="flex-shrink:0">
+  <div class="month-selector">
     <button class="month-btn" onclick="changeMonth(-1)">
       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
     </button>
@@ -233,7 +223,7 @@ nav button span{font-size:10px;font-weight:500}
     </button>
   </div>
 
-  <div class="balance-card" style="flex-shrink:0">
+  <div class="balance-card">
     <div class="balance-label">Số dư</div>
     <div class="balance-amount" id="balance-total">0₫</div>
     <div class="balance-row">
@@ -248,30 +238,26 @@ nav button span{font-size:10px;font-weight:500}
     </div>
   </div>
 
-  <div class="sec-header" style="flex-shrink:0">
+  <div class="sec-header">
     <span class="sec-title">Giao dịch gần đây</span>
     <button class="sec-link" onclick="goScreen('history')">Xem tất cả</button>
   </div>
-  <div class="tx-scroll-wrap">
-    <div id="home-tx-list"></div>
-  </div>
+  <div class="tx-scroll-wrap"><div id="home-tx-list" class="tx-group"></div></div>
 </div>
 
 <!-- HISTORY SCREEN -->
-<div class="screen" id="screen-history" style="overflow:hidden;flex-direction:column">
-  <div class="topbar" style="flex-shrink:0">
+<div class="screen" id="screen-history" style="display:none;flex-direction:column">
+  <div class="topbar">
     <div class="topbar-row">
       <div class="page-title">Lịch sử</div>
     </div>
   </div>
-  <div class="filter-tabs" style="flex-shrink:0">
+  <div class="filter-tabs">
     <button class="filter-tab active" onclick="setFilter('all',this)">Tất cả</button>
     <button class="filter-tab" onclick="setFilter('chi',this)">Chi tiêu</button>
     <button class="filter-tab" onclick="setFilter('thu',this)">Thu nhập</button>
   </div>
-  <div class="tx-scroll-wrap" style="padding-top:8px;padding-bottom:80px">
-    <div id="history-list"></div>
-  </div>
+  <div id="history-list" style="padding:8px 0;overflow-y:auto;flex:1;min-height:0"></div>
 </div>
 
 <!-- ADD SCREEN -->
@@ -416,13 +402,13 @@ nav button span{font-size:10px;font-weight:500}
 <script>
 const CAT_CHI=[
   {n:'Ăn uống',e:'🍜',c:'#f87171'},{n:'Di chuyển',e:'🚗',c:'#60a5fa'},
-  {n:'Mua sắm',e:'🛒',c:'#fb923c'},{n:'Sinh hoạt',e:'🏠',c:'#a78bfa'},
+  {n:'Mua sắm',e:'🛒',c:'#fb923c'},{n:'Nhà ở',e:'🏠',c:'#a78bfa'},
   {n:'Y tế',e:'💊',c:'#f472b6'},{n:'Giải trí',e:'🎮',c:'#34d399'},
   {n:'Giáo dục',e:'📚',c:'#4ade80'},{n:'Khác',e:'📦',c:'#94a3b8'}
 ];
 const CAT_THU=[
   {n:'Lương',e:'💰',c:'#4ade80'},{n:'Thưởng',e:'🎁',c:'#34d399'},
-  {n:'Gift',e:'📈',c:'#60a5fa'},{n:'Bán hàng',e:'🏪',c:'#fb923c'},
+  {n:'Đầu tư',e:'📈',c:'#60a5fa'},{n:'Bán hàng',e:'🏪',c:'#fb923c'},
   {n:'Khác',e:'📦',c:'#94a3b8'}
 ];
 
@@ -453,9 +439,11 @@ function showToast(msg){
 
 // NAVIGATION
 function goScreen(name){
-  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.screen').forEach(s=>{s.classList.remove('active');s.style.display='none';});
   document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
-  document.getElementById('screen-'+name).classList.add('active');
+  const scr=document.getElementById('screen-'+name);
+  scr.classList.add('active');
+  scr.style.display='flex';
   document.getElementById('nav-'+name).classList.add('active');
   if(name==='home')renderHome();
   if(name==='history')renderHistory();
@@ -596,7 +584,10 @@ function renderStats(){
   const chi=month.filter(t=>t.loai==='chi').reduce((a,t)=>a+t.tien,0);
   document.getElementById('st-thu').textContent=fmt(thu);
   document.getElementById('st-chi').textContent=fmt(chi);
-  document.getElementById('st-du').textContent=fmt(thu-chi);
+  const du=thu-chi;
+  const duEl=document.getElementById('st-du');
+  duEl.textContent=(du>0?'+':du<0?'-':'')+fmt(Math.abs(du));
+  duEl.className='stat-card-val '+(du>0?'green':du<0?'red':'accent');
   document.getElementById('st-cnt').textContent=month.length;
 
   // 6-month bar chart
@@ -710,6 +701,7 @@ function showMonthModal(){
 // INIT
 renderCatPicker();
 document.getElementById('f-ngay').value=new Date().toISOString().split('T')[0];
+document.getElementById('screen-home').style.display='flex';
 renderHome();
 </script>
 </body>
