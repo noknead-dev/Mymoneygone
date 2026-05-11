@@ -88,6 +88,27 @@ nav button span{font-size:10px;font-weight:500}
 .tx-del{background:none;border:none;cursor:pointer;color:var(--text3);padding:4px;margin-left:4px}
 .tx-del svg{width:15px;height:15px;stroke-width:1.8}
 
+/* TX SCROLL CONTAINER */
+.tx-scroll-wrap{
+  flex:1;
+  overflow-y:auto;
+  overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
+  min-height:0;
+  padding-bottom:4px;
+}
+.tx-scroll-wrap::-webkit-scrollbar{width:3px}
+.tx-scroll-wrap::-webkit-scrollbar-track{background:transparent}
+.tx-scroll-wrap::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+/* HOME SCREEN fixed layout */
+#screen-home{
+  overflow:hidden !important;
+  display:none;
+  flex-direction:column;
+}
+#screen-home.active{display:flex}
+
 .empty-state{padding:40px 20px;text-align:center;color:var(--text3)}
 .empty-state svg{width:48px;height:48px;margin-bottom:12px;opacity:.4}
 .empty-state p{font-size:15px}
@@ -188,7 +209,7 @@ nav button span{font-size:10px;font-weight:500}
 
 <!-- HOME SCREEN -->
 <div class="screen active" id="screen-home">
-  <div class="topbar">
+  <div class="topbar" style="flex-shrink:0">
     <div class="topbar-row">
       <div>
         <div style="font-size:12px;color:var(--text3);font-weight:500">Xin chào 👋</div>
@@ -202,7 +223,7 @@ nav button span{font-size:10px;font-weight:500}
     </div>
   </div>
 
-  <div class="month-selector">
+  <div class="month-selector" style="flex-shrink:0">
     <button class="month-btn" onclick="changeMonth(-1)">
       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
     </button>
@@ -212,7 +233,7 @@ nav button span{font-size:10px;font-weight:500}
     </button>
   </div>
 
-  <div class="balance-card">
+  <div class="balance-card" style="flex-shrink:0">
     <div class="balance-label">Số dư</div>
     <div class="balance-amount" id="balance-total">0₫</div>
     <div class="balance-row">
@@ -227,26 +248,30 @@ nav button span{font-size:10px;font-weight:500}
     </div>
   </div>
 
-  <div class="sec-header">
+  <div class="sec-header" style="flex-shrink:0">
     <span class="sec-title">Giao dịch gần đây</span>
     <button class="sec-link" onclick="goScreen('history')">Xem tất cả</button>
   </div>
-  <div id="home-tx-list" class="tx-group"></div>
+  <div class="tx-scroll-wrap">
+    <div id="home-tx-list"></div>
+  </div>
 </div>
 
 <!-- HISTORY SCREEN -->
-<div class="screen" id="screen-history">
-  <div class="topbar">
+<div class="screen" id="screen-history" style="overflow:hidden;flex-direction:column">
+  <div class="topbar" style="flex-shrink:0">
     <div class="topbar-row">
       <div class="page-title">Lịch sử</div>
     </div>
   </div>
-  <div class="filter-tabs">
+  <div class="filter-tabs" style="flex-shrink:0">
     <button class="filter-tab active" onclick="setFilter('all',this)">Tất cả</button>
     <button class="filter-tab" onclick="setFilter('chi',this)">Chi tiêu</button>
     <button class="filter-tab" onclick="setFilter('thu',this)">Thu nhập</button>
   </div>
-  <div id="history-list" style="padding:8px 0"></div>
+  <div class="tx-scroll-wrap" style="padding-top:8px;padding-bottom:80px">
+    <div id="history-list"></div>
+  </div>
 </div>
 
 <!-- ADD SCREEN -->
